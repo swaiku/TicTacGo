@@ -1,0 +1,58 @@
+package screens
+
+import (
+	"GoTicTacToe/assets"
+	"GoTicTacToe/ui"
+	"image/color"
+
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
+)
+
+type StartScreen struct {
+	host    ScreenHost
+	buttons []*ui.Button
+}
+
+const (
+	buttonWidth  = float64(200)
+	buttonHeight = float64(64)
+	buttonRadius = float64(10)
+)
+
+func NewStartScreen(h ScreenHost) *StartScreen {
+	s := &StartScreen{host: h}
+
+	s.buttons = []*ui.Button{
+		ui.NewButton("Local Play", -buttonWidth/2-10, 0.0, ui.AnchorCenter, buttonWidth, buttonHeight, buttonRadius, ui.DefaultWidgetStyle, func() {
+			s.host.SetScreen(NewGameScreen(s.host))
+		}),
+		ui.NewButton("Multiplayer", buttonWidth/2+10, 0.0, ui.AnchorCenter, buttonWidth, buttonHeight, buttonRadius, ui.TransparentWidgetStyle, func() {}),
+	}
+
+	return s
+}
+
+func (s *StartScreen) Update() error {
+	for _, btn := range s.buttons {
+		btn.Update()
+	}
+	return nil
+}
+
+func (s *StartScreen) Draw(screen *ebiten.Image) {
+	w, h := GetWindowSize()
+
+	// Title
+	opts := &text.DrawOptions{}
+	opts.PrimaryAlign = text.AlignCenter
+	opts.GeoM.Translate(w/2, h*0.2)
+	opts.ColorScale.ScaleWithColor(color.White)
+
+	text.Draw(screen, "Go Tic Tac Toe", assets.BigFont, opts)
+
+	// Buttons
+	for _, btn := range s.buttons {
+		btn.Draw(screen)
+	}
+}
