@@ -3,6 +3,8 @@ package screens
 import (
 	"GoTicTacToe/assets"
 	"GoTicTacToe/game"
+	"GoTicTacToe/ui"
+	uiutils "GoTicTacToe/ui/utils"
 	"fmt"
 	"image/color"
 	"os"
@@ -12,53 +14,60 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
+// GameScreen represents the main gameplay view.
+// It handles the game logic, UI board rendering, and HUD display.
 type GameScreen struct {
 	host      ScreenHost
 	game      *game.Game
-	gameImage *ebiten.Image
+	boardView *ui.BoardView
+	scoreView *ui.ScoreView
 }
 
 const (
-	boardSize = 3
-	cellSize  = 160
+	boardPixelSize = 480.0 // Board visual size in pixels
+	scorePixelWidth = 300
+	scorePixelHeight = 80
 )
 
+// NewGameScreen initializes a new GameScreen with a fresh game and board view.
 func NewGameScreen(h ScreenHost) *GameScreen {
+	// Create game logic
 	g := game.NewGame()
 
-	return &GameScreen{
-		host:      h,
-		game:      g,
-		gameImage: ebiten.NewImage(boardSize*cellSize, boardSize*cellSize),
+	gs := &GameScreen{
+		host: h,
+		game: g,
 	}
+
+	gs.scoreView = ui.NewScoreView(g, scorePixelWidth, scorePixelHeight, uiutils.DefaultWidgetStyle)
+
+	// Create the interactive board view with callback on cell click
+	gs.boardView = ui.NewBoardView(
+		g.Board,        // Logical board reference
+		0, 0,
+		boardPixelSize, // Pixel size
+		uiutils.DefaultWidgetStyle,
+		func(x, y int) {
+			gs.game.PlayMove(x, y)
+		},
+	)
+
+	return gs
 }
 
+// Update processes input and updates UI components.
 func (gs *GameScreen) Update() error {
-	switch gs.game.State {
+	// Handle board interactions
+	gs.boardView.Update()
 
-	case game.PLAYING:
-		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-			x, y := ebiten.CursorPosition()
-			boardX, boardY := gs.game.GetCursorBoardPos(x, y)
-
-			if gs.game.PlayMove(boardX, boardY) {
-				// Win
-				if gs.game.CheckWin() {
-					gs.game.State = game.GAME_END
-				} else if gs.game.CheckDraw() {
-					gs.game.State = game.GAME_END
-					gs.game.Winner = nil
-				}
-			}
-		}
-
-	case game.GAME_END:
+	// Reset the game if it's finished and the user clicks anywhere
+	if gs.game.State == game.GAME_END {
 		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 			gs.game.Reset()
 		}
 	}
 
-	// Hotkeys
+	// Global hotkeys
 	if inpututil.KeyPressDuration(ebiten.KeyEscape) == 60 {
 		os.Exit(0)
 	}
@@ -70,65 +79,42 @@ func (gs *GameScreen) Update() error {
 	return nil
 }
 
+// Draw renders the board and HUD.
 func (gs *GameScreen) Draw(screen *ebiten.Image) {
-	gs.gameImage.Clear()
+	// Draw board component
+	gs.boardView.Draw(screen)
+	gs.scoreView.Draw(screen)
 
-	// Draw board grid
-	screen.DrawImage(gs.game.BoardImg, nil)
-
-	// Draw symbols
-	for y := 0; y < gs.game.Board.Size; y++ {
-		for x := 0; x < gs.game.Board.Size; x++ {
-			player := gs.game.Board.Cells[x][y]
-			if player != nil {
-				gs.drawSymbol(x, y, player, screen)
-			}
-		}
-	}
-
-	// Debug info
+	// HUD elements
 	gs.drawDebug(screen)
-
-	// Score
 	gs.drawScore(screen)
 
-	// Winning message
+	// Display win/draw message if needed
 	if gs.game.State == game.GAME_END {
 		gs.drawEndMessage(screen)
 	}
 }
 
 //
-// === Drawing Helpers ===
+// --- HUD Drawing Helpers ---
 //
 
-func (gs *GameScreen) drawSymbol(gridX, gridY int, p *game.Player, screen *ebiten.Image) {
-	padding := cellSize * 0.1
-	usable := cellSize - 2*padding
-	scale := usable / float64(cellSize)
-
-	px := float64(gridX)*cellSize + padding
-	py := float64(gridY)*cellSize + padding
-
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Scale(scale, scale)
-	op.GeoM.Translate(px, py)
-
-	screen.DrawImage(p.Symbol.Image, op)
-}
-
+// drawDebug displays FPS, TPS, and mouse position for debugging.
 func (gs *GameScreen) drawDebug(screen *ebiten.Image) {
 	mx, my := ebiten.CursorPosition()
-	msg := fmt.Sprintf("TPS: %.2f | FPS: %.2f | Mouse: %d,%d",
-		ebiten.ActualTPS(), ebiten.ActualFPS(), mx, my)
+	msg := fmt.Sprintf(
+		"TPS: %.2f | FPS: %.2f | Mouse: %d,%d",
+		ebiten.ActualTPS(), ebiten.ActualFPS(), mx, my,
+	)
 
 	opts := &text.DrawOptions{}
-	opts.GeoM.Translate(5, 560)
+	opts.GeoM.Translate(5, 560) // Adjust if window size changes
 	opts.ColorScale.ScaleWithColor(color.White)
 
 	text.Draw(screen, msg, assets.NormalFont, opts)
 }
 
+// drawScore displays the player scores for O and X.
 func (gs *GameScreen) drawScore(screen *ebiten.Image) {
 	msg := fmt.Sprintf("O: %d | X: %d",
 		gs.game.Players[1].Points,
@@ -137,12 +123,13 @@ func (gs *GameScreen) drawScore(screen *ebiten.Image) {
 
 	opts := &text.DrawOptions{}
 	opts.PrimaryAlign = text.AlignCenter
-	opts.GeoM.Translate(240, 570)
+	opts.GeoM.Translate(320, 570) // Centered horizontally for a 640px window
 	opts.ColorScale.ScaleWithColor(color.White)
 
 	text.Draw(screen, msg, assets.NormalFont, opts)
 }
 
+// drawEndMessage displays a centered win/draw message at the end of a game.
 func (gs *GameScreen) drawEndMessage(screen *ebiten.Image) {
 	var msg string
 	if gs.game.Winner != nil {
@@ -154,8 +141,11 @@ func (gs *GameScreen) drawEndMessage(screen *ebiten.Image) {
 	opts := &text.DrawOptions{}
 	opts.PrimaryAlign = text.AlignCenter
 	opts.SecondaryAlign = text.AlignCenter
-	opts.GeoM.Translate(240, 300)
-	opts.ColorScale.ScaleWithColor(color.White)
+
+	sw, sh := ebiten.WindowSize()
+	opts.GeoM.Translate(float64(sw)/2, float64(sh)/2)
+
+	opts.ColorScale.ScaleWithColor(color.RGBA{255, 255, 0, 255})
 
 	text.Draw(screen, msg, assets.BigFont, opts)
 }

@@ -3,6 +3,7 @@ package screens
 import (
 	"GoTicTacToe/assets"
 	"GoTicTacToe/ui"
+	uiutils "GoTicTacToe/ui/utils"
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -24,10 +25,10 @@ func NewStartScreen(h ScreenHost) *StartScreen {
 	s := &StartScreen{host: h}
 
 	s.buttons = []*ui.Button{
-		ui.NewButton("Local Play", -buttonWidth/2-10, 0.0, ui.AnchorCenter, buttonWidth, buttonHeight, buttonRadius, ui.DefaultWidgetStyle, func() {
+		ui.NewButton("Local Play", -buttonWidth/2-10, 0.0, uiutils.AnchorCenter, buttonWidth, buttonHeight, buttonRadius, uiutils.DefaultWidgetStyle, func() {
 			s.host.SetScreen(NewGameScreen(s.host))
 		}),
-		ui.NewButton("Multiplayer", buttonWidth/2+10, 0.0, ui.AnchorCenter, buttonWidth, buttonHeight, buttonRadius, ui.TransparentWidgetStyle, func() {}),
+		ui.NewButton("Multiplayer", buttonWidth/2+10, 0.0, uiutils.AnchorCenter, buttonWidth, buttonHeight, buttonRadius, uiutils.TransparentWidgetStyle, func() {}),
 	}
 
 	return s

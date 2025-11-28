@@ -2,69 +2,66 @@ package game
 
 import (
 	"image/color"
-
-	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// State du jeu
+// GameState represents the current state of the game.
 type GameState int
 
 const (
-	PLAYING GameState = iota
-	GAME_END
+	PLAYING GameState = iota // A game is currently in progress
+	GAME_END                 // The game has ended (win or draw)
 )
 
+// Game contains all data and logic required to run a match.
 type Game struct {
-	State    GameState
-	Board    *Board
-	Players  []*Player
-	Current  *Player
-	Winner   *Player
-	BoardImg *ebiten.Image
+	State   GameState // Current game state (playing or ended)
+	Board   *Board    // Game board instance
+	Players []*Player // All players involved in the game
+	Current *Player   // Player whose turn it currently is
+	Winner  *Player   // Winner of the match (nil in case of draw)
 }
 
-// Constructeur principal
+// NewGame creates a new Game instance with a full reset.
 func NewGame() *Game {
 	g := &Game{}
 	g.ResetHard()
 	return g
 }
 
-// Réinitialisation complète (nouvelle grille, nouveaux symboles)
+// ResetHard fully resets the game state, board, players, and winner.
+// This does NOT preserve any previous scores.
 func (g *Game) ResetHard() {
 	g.Board = NewBoard(3, 3)
+
 	g.Players = []*Player{
-		NewPlayer(newSymbol(CIRCLE), color.White),
-		NewPlayer(newSymbol(CROSS), color.White),
+		NewPlayer(newSymbol(CIRCLE), color.RGBA{R: 255, G: 0, B: 0, A: 255}),
+		NewPlayer(newSymbol(CROSS), color.RGBA{R: 0, G: 0, B: 255, A: 255}),
 	}
 
 	g.Current = g.Players[0]
 	g.Winner = nil
 	g.State = PLAYING
-	g.BoardImg = g.Board.GenerateImage()
 }
 
-// Réinitialise la grille mais garde les scores
+// Reset clears the board and restarts the game,
+// while keeping player scores intact.
 func (g *Game) Reset() {
-	size := g.Board.Size
-	win := g.Board.ToWin
-
-	g.Board = NewBoard(size, win)
-	g.BoardImg = g.Board.GenerateImage()
-
+	g.Board.Clear()
 	g.Current = g.Players[0]
 	g.Winner = nil
 	g.State = PLAYING
 }
 
+// ResetPoints resets every player's score to zero.
 func (g *Game) ResetPoints() {
 	for _, p := range g.Players {
 		p.Points = 0
 	}
 }
 
-// Rotation des joueurs
-func (g *Game) nextPlayer() {
+// NextPlayer switches the turn to the next player in the list.
+// If the current player is the last in the list, it wraps around.
+func (g *Game) NextPlayer() {
 	if len(g.Players) == 0 {
 		return
 	}
@@ -74,24 +71,36 @@ func (g *Game) nextPlayer() {
 			return
 		}
 	}
+	// Fallback: if current player is not found, reset to first player
 	g.Current = g.Players[0]
 }
 
-func (g *Game) GetCursorBoardPos(mx, my int) (int, int) {
-	cell := 480 / g.Board.Size
-	return mx / cell, my / cell
-}
-
+// PlayMove attempts to play a move at (x,y), then handles
+// turn switching, win detection, and draw detection.
 func (g *Game) PlayMove(x, y int) bool {
+	// Attempt to place the player's mark
 	ok := g.Board.Play(g.Current, x, y)
 	if !ok {
-		return false
+		return false // Invalid move (cell already taken or out of bounds)
 	}
 
+	// Check for victory
+	if g.CheckWin() {
+		return true
+	}
+
+	// Check for draw (board full, no winner)
+	if g.CheckDraw() {
+		return true
+	}
+
+	// Continue the game: switch to next player
+	g.NextPlayer()
 	return true
 }
 
-// Vérifie victoire
+// CheckWin checks if a player won the match.
+// If so, updates the winner, increments score, and ends the game.
 func (g *Game) CheckWin() bool {
 	p := g.Board.CheckWin()
 	if p != nil {
@@ -103,7 +112,7 @@ func (g *Game) CheckWin() bool {
 	return false
 }
 
-// Vérifie égalité
+// CheckDraw returns true if the game is a draw and ends the game state.
 func (g *Game) CheckDraw() bool {
 	if g.Board.CheckDraw() {
 		g.Winner = nil

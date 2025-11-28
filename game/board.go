@@ -1,19 +1,17 @@
 package game
 
-import (
-	"image/color"
-
-	"github.com/hajimehoshi/ebiten/v2"
-)
-
-const boardThickness = 3
-
+// Board represents the game grid and contains player tokens.
+// - Cells is a Size x Size matrix of *Player.
+// - ToWin defines how many aligned symbols are required to win
+//   (used for variants such as 4-in-a-row or 5-in-a-row).
 type Board struct {
 	Cells [][]*Player
 	Size  int
 	ToWin int
 }
 
+// NewBoard allocates a new empty board of a given size.
+// All cells start as nil (empty).
 func NewBoard(size, toWin int) *Board {
 	b := &Board{
 		Size:  size,
@@ -24,44 +22,17 @@ func NewBoard(size, toWin int) *Board {
 	for i := range b.Cells {
 		b.Cells[i] = make([]*Player, size)
 	}
-
 	return b
 }
 
-// Dessin de la grille
-func (b *Board) GenerateImage() *ebiten.Image {
-	img := ebiten.NewImage(480, 480)
-	img.Fill(color.RGBA{20, 20, 20, 255})
-
-	cell := 480 / b.Size
-
-	// Lignes verticales et horizontales
-	lineColor := color.RGBA{200, 200, 200, 255}
-	for i := 1; i < b.Size; i++ {
-
-		// vertical
-		v := ebiten.NewImage(boardThickness, 480)
-		v.Fill(lineColor)
-		opv := &ebiten.DrawImageOptions{}
-		opv.GeoM.Translate(float64(i*cell), 0)
-		img.DrawImage(v, opv)
-
-		// horizontal
-		h := ebiten.NewImage(480, boardThickness)
-		h.Fill(lineColor)
-		oph := &ebiten.DrawImageOptions{}
-		oph.GeoM.Translate(0, float64(i*cell))
-		img.DrawImage(h, oph)
-	}
-
-	return img
-}
-
-// Place un symbole
+// Play attempts to place player p at grid coordinates (x, y).
+// Returns true if the move is valid and the cell was empty.
 func (b *Board) Play(p *Player, x, y int) bool {
+	// Out-of-bounds protection
 	if x < 0 || y < 0 || x >= b.Size || y >= b.Size {
 		return false
 	}
+	// Cell already filled
 	if b.Cells[x][y] != nil {
 		return false
 	}
@@ -70,18 +41,20 @@ func (b *Board) Play(p *Player, x, y int) bool {
 	return true
 }
 
-// Vérifie victoire
+// CheckWin verifies if a player has won.
+// It checks all rows, columns, and the two main diagonals.
 func (b *Board) CheckWin() *Player {
 	n := b.Size
 
-	// Rows/Cols
+	// Check all rows and columns
 	for i := 0; i < n; i++ {
-		// Row
+
+		// Check row i
 		if p := same(b.Cells[i]); p != nil {
 			return p
 		}
 
-		// Col
+		// Check column i
 		col := make([]*Player, n)
 		for y := 0; y < n; y++ {
 			col[y] = b.Cells[y][i]
@@ -91,7 +64,7 @@ func (b *Board) CheckWin() *Player {
 		}
 	}
 
-	// Diag 1
+	// Check main diagonal
 	diag1 := make([]*Player, n)
 	for i := 0; i < n; i++ {
 		diag1[i] = b.Cells[i][i]
@@ -100,7 +73,7 @@ func (b *Board) CheckWin() *Player {
 		return p
 	}
 
-	// Diag 2
+	// Check anti-diagonal
 	diag2 := make([]*Player, n)
 	for i := 0; i < n; i++ {
 		diag2[i] = b.Cells[i][n-1-i]
@@ -112,12 +85,15 @@ func (b *Board) CheckWin() *Player {
 	return nil
 }
 
-func same(row []*Player) *Player {
-	first := row[0]
+// same returns the player occupying the whole row/column/diagonal
+// if all entries are identical and non-nil.
+// Otherwise, it returns nil.
+func same(line []*Player) *Player {
+	first := line[0]
 	if first == nil {
 		return nil
 	}
-	for _, p := range row {
+	for _, p := range line {
 		if p != first {
 			return nil
 		}
@@ -125,7 +101,7 @@ func same(row []*Player) *Player {
 	return first
 }
 
-// Check draw
+// CheckDraw returns true if the board is full and no winner exists.
 func (b *Board) CheckDraw() bool {
 	for x := range b.Cells {
 		for y := range b.Cells[x] {
@@ -135,4 +111,13 @@ func (b *Board) CheckDraw() bool {
 		}
 	}
 	return true
+}
+
+// Clear resets all cells to nil (empty board).
+func (b *Board) Clear() {
+	for x := range b.Cells {
+		for y := range b.Cells[x] {
+			b.Cells[x][y] = nil
+		}
+	}
 }
