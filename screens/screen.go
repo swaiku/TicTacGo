@@ -21,8 +21,8 @@ type ScreenHost interface {
 }
 
 type screenHost struct {
-	current       Screen
-	debugui       debugui.DebugUI
+	current Screen
+	debugui debugui.DebugUI
 }
 
 func NewScreenHost() *screenHost {

@@ -133,7 +133,16 @@ func (gs *GameScreen) Draw(screen *ebiten.Image) {
 func (gs *GameScreen) drawEndMessage(screen *ebiten.Image) {
 	var msg string
 	if gs.game.Winner != nil {
-		msg = fmt.Sprintf("%s wins!", gs.game.Winner.Symbol.Type)
+		var sym string
+		switch gs.game.Winner.Symbol.Type {
+		case assets.CrossSymbol:
+			sym = "X"
+		case assets.CircleSymbol:
+			sym = "O"
+		}
+
+		msg = fmt.Sprintf("%s wins!", sym)
+
 	} else {
 		msg = "It's a draw!"
 	}
