@@ -19,20 +19,16 @@ const (
 	buttonWidth  = float64(200)
 	buttonHeight = float64(64)
 	buttonRadius = float64(10)
+	buttonSpacing = float64(20)
+	buttonYOffset = float64(140)
 )
 
 func NewStartScreen(h ScreenHost) *StartScreen {
 	s := &StartScreen{host: h}
 
 	s.buttons = []*ui.Button{
-		ui.NewButton("Local Play", -buttonWidth/2-10, 200.0, uiutils.AnchorCenter, buttonWidth, buttonHeight, buttonRadius, uiutils.DefaultWidgetStyle, func() {
-			s.host.SetScreen(NewGameScreen(s.host))
-		}),
-		ui.NewButton("Multiplayer", buttonWidth/2+10, 200.0, uiutils.AnchorCenter, buttonWidth, buttonHeight, buttonRadius, uiutils.TransparentWidgetStyle, func() {}),
-	}
-
-		ui.NewButton("Local (2 Players)", 0, -80, uiutils.AnchorCenter,
-			buttonWidth, buttonHeight, buttonRadius, uiutils.DefaultWidgetStyle,
+		ui.NewButton("Local", -buttonWidth - buttonSpacing, buttonYOffset, uiutils.AnchorCenter,
+			buttonWidth, buttonHeight, buttonRadius, uiutils.NormalWidgetStyle,
 			func() {
 				s.host.SetScreen(NewGameScreen(s.host, GameConfig{
 					Mode: LocalVsLocal,
@@ -40,9 +36,9 @@ func NewStartScreen(h ScreenHost) *StartScreen {
 			},
 		),
 
-		ui.NewButton("Play vs AI", 0, 0, uiutils.AnchorCenter,
+		ui.NewButton("Play vs AI", 0, buttonYOffset, uiutils.AnchorCenter,
 			buttonWidth, buttonHeight, buttonRadius,
-			uiutils.DefaultWidgetStyle,
+			uiutils.NormalWidgetStyle,
 			func() {
 				h.SetScreen(NewAIScreen(h, GameConfig{
 					Mode: LocalVsAI,
@@ -51,11 +47,11 @@ func NewStartScreen(h ScreenHost) *StartScreen {
 		),
 
 		ui.NewButton(
-			"Multiplayer",
-			0, 80,
+			"Multiplayer \n (not implemented)",
+			buttonWidth + buttonSpacing, buttonYOffset,
 			uiutils.AnchorCenter,
 			buttonWidth, buttonHeight, buttonRadius,
-			uiutils.TransparentWidgetStyle,
+			uiutils.DangerWidgetStyle,
 			func() {},
 		),
 	}
@@ -86,7 +82,7 @@ func (s *StartScreen) Draw(screen *ebiten.Image) {
 
 	op.Filter = ebiten.FilterLinear
 
-	targetWidth := float64(w) * 0.7
+	targetWidth := float64(w) * 0.5
 
 	scaleFactor := targetWidth / origLogoW
 
@@ -96,7 +92,7 @@ func (s *StartScreen) Draw(screen *ebiten.Image) {
 	scaledLogoH := origLogoH * scaleFactor
 
 	posX := (float64(w) - scaledLogoW) / 2
-	posY := (float64(h) - scaledLogoH) / 2 * 0.6
+	posY := (float64(h) - scaledLogoH) / 2 * 0.4
 
 	op.GeoM.Translate(posX, posY)
 

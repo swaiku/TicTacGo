@@ -81,7 +81,7 @@ func (b *Button) Draw(screen *ebiten.Image) {
 	opts := &text.DrawOptions{}
 	opts.PrimaryAlign = text.AlignCenter
 	opts.SecondaryAlign = text.AlignCenter
-
+	opts.LineSpacing = 20
 	// Center the text inside the button
 	opts.GeoM.Translate(x+b.Width/2, y+b.Height/2)
 	opts.ColorScale.ScaleWithColor(b.Style.TextColor)

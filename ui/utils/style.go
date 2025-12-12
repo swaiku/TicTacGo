@@ -46,10 +46,9 @@ var TransparentWidgetStyle = WidgetStyle{
 	HoverMode: HoverFade,
 }
 
-// DangerWidgetStyle is the style for danger widgets.
-var DangerWidgetStyle = WidgetStyle{
-	BackgroundNormal: color.RGBA{200, 30, 30, 255},
-	BackgroundHover:  color.RGBA{255, 80, 80, 255},
+var NormalWidgetStyle = WidgetStyle{
+	BackgroundNormal: color.RGBA{64, 92, 245, 100},
+	BackgroundHover:  color.RGBA{43,61,163, 255},
 
 	TextColor: color.White,
 
@@ -57,4 +56,17 @@ var DangerWidgetStyle = WidgetStyle{
 	BorderWidth: 2,
 
 	HoverMode: HoverColorLerp,
+}
+
+// DangerWidgetStyle is the style for danger widgets.
+var DangerWidgetStyle = WidgetStyle{
+	BackgroundNormal: color.RGBA{200, 30, 30, 255},
+	BackgroundHover:  color.RGBA{200, 30, 30, 255},
+
+	TextColor: color.White,
+
+	BorderColor: color.RGBA{60, 0, 0, 255},
+	BorderWidth: 2,
+
+	HoverMode: HoverSolid,
 }
