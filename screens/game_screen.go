@@ -135,9 +135,9 @@ func (gs *GameScreen) drawEndMessage(screen *ebiten.Image) {
 	if gs.game.Winner != nil {
 		var sym string
 		switch gs.game.Winner.Symbol.Type {
-		case game.CROSS:
+		case assets.CrossSymbol:
 			sym = "X"
-		case game.CIRCLE:
+		case assets.CircleSymbol:
 			sym = "O"
 		}
 
