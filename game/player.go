@@ -13,13 +13,18 @@ type Player struct {
 	IsAI   bool
 }
 
+
 func NewPlayer(sym *assets.Symbol, color color.Color) *Player {
 	return &Player{Symbol: sym, Points: 0, Color: color}
 }
 
-func (p *Player) Opponent(players [2]*Player) *Player {
-	if p == players[0] {
-		return players[1]
+
+// Opponent returns all the players except the current player
+func (p *Player) Opponent(players []*Player) *Player {
+	for _, candidate := range players {
+		if candidate != p {
+			return candidate
+		}
 	}
-	return players[0]
+	return nil
 }
