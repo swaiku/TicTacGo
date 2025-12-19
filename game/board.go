@@ -41,64 +41,49 @@ func (b *Board) Play(p *Player, x, y int) bool {
 	return true
 }
 
-// CheckWin verifies if a player has won.
-// It checks all rows, columns, and the two main diagonals.
+// CheckWin verifies if a player has won for any streak of length ToWin
+// horizontally, vertically, or diagonally.
 func (b *Board) CheckWin() *Player {
-	n := b.Size
+	target := b.ToWin
+	if target <= 0 || target > b.Size {
+		target = b.Size
+	}
 
-	// Check all rows and columns
-	for i := 0; i < n; i++ {
+	directions := [][2]int{
+		{1, 0},  // horizontal
+		{0, 1},  // vertical
+		{1, 1},  // diagonal
+		{1, -1}, // anti-diagonal
+	}
 
-		// Check row i
-		if p := same(b.Cells[i]); p != nil {
-			return p
+	for x := 0; x < b.Size; x++ {
+		for y := 0; y < b.Size; y++ {
+			start := b.Cells[x][y]
+			if start == nil {
+				continue
+			}
+
+			for _, dir := range directions {
+				count := 1
+				for step := 1; step < target; step++ {
+					nx := x + dir[0]*step
+					ny := y + dir[1]*step
+					if nx < 0 || ny < 0 || nx >= b.Size || ny >= b.Size {
+						break
+					}
+					if b.Cells[nx][ny] != start {
+						break
+					}
+					count++
+				}
+				if count == target {
+					return start
+				}
+			}
 		}
-
-		// Check column i
-		col := make([]*Player, n)
-		for y := 0; y < n; y++ {
-			col[y] = b.Cells[y][i]
-		}
-		if p := same(col); p != nil {
-			return p
-		}
-	}
-
-	// Check main diagonal
-	diag1 := make([]*Player, n)
-	for i := 0; i < n; i++ {
-		diag1[i] = b.Cells[i][i]
-	}
-	if p := same(diag1); p != nil {
-		return p
-	}
-
-	// Check anti-diagonal
-	diag2 := make([]*Player, n)
-	for i := 0; i < n; i++ {
-		diag2[i] = b.Cells[i][n-1-i]
-	}
-	if p := same(diag2); p != nil {
-		return p
 	}
 
 	return nil
-}
-
-// same returns the player occupying the whole row/column/diagonal
-// if all entries are identical and non-nil.
-// Otherwise, it returns nil.
-func same(line []*Player) *Player {
-	first := line[0]
-	if first == nil {
-		return nil
-	}
-	for _, p := range line {
-		if p != first {
-			return nil
-		}
-	}
-	return first
 }
 
 // CheckDraw returns true if the board is full and no winner exists.
