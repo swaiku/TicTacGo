@@ -4,7 +4,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/swaiku/TicTacGo">
-    <img src="assets/static/gonnectmax_logo.png" alt="Logo" width="200" height="150">
+    <img src="assets/static/gonnectmax_logo.png" alt="Logo" width="600" height="450">
   </a>
 
   <h3 align="center">TicTacGo</h3>
@@ -70,8 +70,7 @@ Key features:
 
 ### Built With
 
-*   [![Go][Go-Badge]][Go-url]
-*   [![Ebitengine][Ebiten-Badge]][Ebiten-url]
+[![Go][Go-Badge]][Go-url] [![Ebitengine][Ebiten-Badge]][Ebiten-url]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
