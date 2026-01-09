@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	Logo       *ebiten.Image
+	Logo *ebiten.Image
 )
 
 func init() {
