@@ -190,6 +190,8 @@ Project Link: [https://github.com/swaiku/TicTacGo](https://github.com/swaiku/Tic
 *   [Ebitengine](https://ebitengine.org/) - A dead simple 2D game library for Go.
 *   [Best-README-Template](https://github.com/othneildrew/Best-README-Template)
 
+This project has been developped in collaboration with [ZePyLaw](https://github.com/ZePyLaw) 🤍
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
