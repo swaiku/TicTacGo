@@ -16,9 +16,9 @@ type StartScreen struct {
 }
 
 const (
-	buttonWidth  = float64(200)
-	buttonHeight = float64(64)
-	buttonRadius = float64(10)
+	buttonWidth   = float64(200)
+	buttonHeight  = float64(64)
+	buttonRadius  = float64(10)
 	buttonSpacing = float64(20)
 	buttonYOffset = float64(140)
 )
@@ -27,7 +27,7 @@ func NewStartScreen(h ScreenHost) *StartScreen {
 	s := &StartScreen{host: h}
 
 	s.buttons = []*ui.Button{
-		ui.NewButton("Local", -buttonWidth - buttonSpacing, buttonYOffset, uiutils.AnchorCenter,
+		ui.NewButton("Local", -buttonWidth-buttonSpacing, buttonYOffset, uiutils.AnchorCenter,
 			buttonWidth, buttonHeight, buttonRadius, uiutils.NormalWidgetStyle,
 			func() {
 				s.host.SetScreen(NewGameScreen(s.host, GameConfig{
@@ -48,7 +48,7 @@ func NewStartScreen(h ScreenHost) *StartScreen {
 
 		ui.NewButton(
 			"Multiplayer \n (not implemented)",
-			buttonWidth + buttonSpacing, buttonYOffset,
+			buttonWidth+buttonSpacing, buttonYOffset,
 			uiutils.AnchorCenter,
 			buttonWidth, buttonHeight, buttonRadius,
 			uiutils.DangerWidgetStyle,

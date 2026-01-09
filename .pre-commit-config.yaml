@@ -1,0 +1,27 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+
+  - repo: local
+    hooks:
+      - id: gofmt
+        name: gofmt
+        entry: gofmt -w
+        language: system
+        files: \.go$
+
+      - id: govet
+        name: go vet
+        entry: go vet ./...
+        language: system
+        pass_filenames: false
+
+      - id: gotest
+        name: go test
+        entry: python -c "import os, subprocess; os.environ['TESTING']='1'; subprocess.check_call(['go','test','./...','-count=1'])"
+        language: system
+        pass_filenames: false

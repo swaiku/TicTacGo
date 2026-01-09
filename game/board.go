@@ -1,9 +1,9 @@
 package game
 
 // Board represents the game grid and contains player tokens.
-// - Cells is a Size x Size matrix of *Player.
-// - ToWin defines how many aligned symbols are required to win
-//   (used for variants such as 4-in-a-row or 5-in-a-row).
+//   - Cells is a Size x Size matrix of *Player.
+//   - ToWin defines how many aligned symbols are required to win
+//     (used for variants such as 4-in-a-row or 5-in-a-row).
 type Board struct {
 	Cells [][]*Player
 	Size  int

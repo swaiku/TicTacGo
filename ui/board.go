@@ -13,8 +13,8 @@ import (
 type BoardView struct {
 	Widget // Embeds Widget: inherits size, position, anchor, AbsPosition(), etc.
 
-	logicBoard  *game.Board          // Reference to the logical board
-	OnCellClick func(cx, cy int)     // Callback triggered when a cell is clicked
+	logicBoard  *game.Board      // Reference to the logical board
+	OnCellClick func(cx, cy int) // Callback triggered when a cell is clicked
 }
 
 // NewBoardView creates a new visual board component.
