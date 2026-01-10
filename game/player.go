@@ -5,28 +5,39 @@ import (
 	"image/color"
 )
 
-// Player represents a participant in the game with their visual identity and score.
+// Player represents a participant in the game.
+//
+// A player can be either human-controlled or AI-controlled.
+// The Symbol and Color are used for rendering, while Points tracks
+// the player's score across multiple rounds.
 type Player struct {
-	Symbol *assets.Symbol // Visual symbol displayed on the board (X, O, etc.)
-	Points int            // Accumulated score across multiple rounds
-	Color  color.Color    // Display color for the player's symbol and UI elements
-	Name   string         // Display name shown in the UI
-	IsAI   bool           // True if this player is controlled by an AI model
+	Symbol *assets.Symbol // Visual symbol associated with the player
+	Points int            // Score accumulated across rounds
+	Color  color.Color    // Display color used in the UI
+	Name   string         // Optional player name
+	IsAI   bool           // Indicates whether the player is AI-controlled
 }
 
-// NewPlayer creates a new Player with the given symbol and color.
-// Points start at zero, and the player defaults to human-controlled.
-func NewPlayer(symbol *assets.Symbol, playerColor color.Color) *Player {
+// NewPlayer creates and returns a new player instance.
+//
+// The player's score is initialized to zero.
+// The Name and IsAI fields may be set later by the caller if needed.
+func NewPlayer(sym *assets.Symbol, color color.Color) *Player {
 	return &Player{
-		Symbol: symbol,
+		Symbol: sym,
 		Points: 0,
-		Color:  playerColor,
+		Color:  color,
 	}
 }
 
-// Opponent returns the first player in the list that is not this player.
-// Returns nil if no opponent is found (e.g., single-player scenario).
-// Note: For games with more than 2 players, this returns only the first opponent.
+// Opponent returns the opponent of the current player.
+//
+Develop// This method assumes a two-player game and returns the first player
+// in the list that is not the receiver. If no opponent is found,
+// nil is returned.
+//
+// Note: For games with more than two players, this logic would need
+// to be adapted.
 func (p *Player) Opponent(players []*Player) *Player {
 	for _, candidate := range players {
 		if candidate != p {

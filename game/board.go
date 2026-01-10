@@ -1,25 +1,45 @@
 package game
 
-// Board represents the game grid and tracks which player occupies each cell.
-// The grid uses column-major indexing: Cells[x][y] where x is the column and y is the row.
+ // Board represents the game grid and contains player tokens.
+//
+// Cells is a Width x Height matrix of *Player (accessed as Cells[x][y]).
+// Width is the number of columns.
+// Height is the number of rows.
+// ToWin defines how many aligned symbols are required to win (variant support).
 type Board struct {
-	Cells  [][]*Player // 2D grid of players; nil indicates an empty cell
-	Width  int         // Number of columns in the grid
-	Height int         // Number of rows in the grid
-	ToWin  int         // Number of aligned symbols required to win
+	Cells  [][]*Player
+	Width  int // Number of columns
+	Height int // Number of rows
+	ToWin  int // Required aligned symbols to win
 }
 
-// winCheckDirections defines the four directions to check for winning alignments:
-// horizontal, vertical, diagonal down-right, and diagonal up-right.
-var winCheckDirections = [][2]int{
-	{1, 0},  // Horizontal: check cells to the right
-	{0, 1},  // Vertical: check cells downward
-	{1, 1},  // Diagonal: check cells down-right
-	{1, -1}, // Diagonal: check cells up-right
+// Direction represents a 2D step (dx, dy) used for line scanning.
+type Direction struct {
+	DX int
+	DY int
 }
 
-// NewBoard creates an empty board with the specified dimensions.
-// All cells are initialized to nil (empty).
+// Common scanning directions used for win detection.
+//
+// We only need to scan 4 directions to cover all possible alignments:
+// horizontal, vertical, and the two diagonals.
+var winDirections = [...]Direction{
+	{DX: 1, DY: 0},  // horizontal (→)
+	{DX: 0, DY: 1},  // vertical (↓)
+	{DX: 1, DY: 1},  // diagonal down-right (↘)
+	{DX: 1, DY: -1}, // diagonal up-right (↗)
+}
+
+const (
+	// initialStreakCount is the count when considering the starting cell.
+	initialStreakCount = 1
+
+	// firstStep is the first step away from the starting cell.
+	firstStep = 1
+)
+
+// NewBoard allocates a new empty board with given dimensions.
+// All cells start as nil (empty).
 func NewBoard(width, height, toWin int) *Board {
 	cells := make([][]*Player, width)
 	for x := range cells {
@@ -49,19 +69,14 @@ func (b *Board) Play(player *Player, x, y int) bool {
 	return true
 }
 
-// isValidPosition checks if coordinates are within board boundaries.
-func (b *Board) isValidPosition(x, y int) bool {
-	return x >= 0 && y >= 0 && x < b.Width && y < b.Height
-}
-
-// CheckWin scans the board for a winning alignment of ToWin consecutive symbols.
-// Returns the winning player, or nil if no winner exists yet.
+// CheckWin verifies if a player has won for any streak of length ToWin
+// horizontally, vertically, or diagonally.
 //
-// The algorithm checks every cell as a potential starting point and looks
-// in four directions (horizontal, vertical, and both diagonals) for a
-// consecutive sequence of the same player's marks.
+// If ToWin is invalid (<= 0 or larger than the smallest board dimension),
+// it is clamped to the smallest dimension. This makes the method robust
+// even when used with board variants or unexpected inputs.
 func (b *Board) CheckWin() *Player {
-	requiredToWin := b.effectiveToWin()
+	target := b.effectiveToWin()
 
 	for x := 0; x < b.Width; x++ {
 		for y := 0; y < b.Height; y++ {
@@ -70,8 +85,25 @@ func (b *Board) CheckWin() *Player {
 				continue
 			}
 
-			if b.hasWinningLineFrom(x, y, startPlayer, requiredToWin) {
-				return startPlayer
+			for _, dir := range winDirections {
+				count := initialStreakCount
+
+				for step := firstStep; step < target; step++ {
+					nx := x + dir.DX*step
+					ny := y + dir.DY*step
+
+					if !b.inBounds(nx, ny) {
+						break
+					}
+					if b.Cells[nx][ny] != start {
+						break
+					}
+					count++
+				}
+
+				if count == target {
+					return start
+				}
 			}
 		}
 	}
@@ -79,49 +111,9 @@ func (b *Board) CheckWin() *Player {
 	return nil
 }
 
-// effectiveToWin returns the ToWin value clamped to valid bounds.
-// ToWin cannot exceed the smallest board dimension.
-func (b *Board) effectiveToWin() int {
-	toWin := b.ToWin
-	minDimension := b.Width
-	if b.Height < minDimension {
-		minDimension = b.Height
-	}
-
-	if toWin <= 0 || toWin > minDimension {
-		return minDimension
-	}
-	return toWin
-}
-
-// hasWinningLineFrom checks if there's a winning line starting from (x, y)
-// in any of the four check directions.
-func (b *Board) hasWinningLineFrom(x, y int, player *Player, requiredToWin int) bool {
-	for _, dir := range winCheckDirections {
-		consecutiveCount := 1
-
-		for step := 1; step < requiredToWin; step++ {
-			nextX := x + dir[0]*step
-			nextY := y + dir[1]*step
-
-			if !b.isValidPosition(nextX, nextY) {
-				break
-			}
-			if b.Cells[nextX][nextY] != player {
-				break
-			}
-			consecutiveCount++
-		}
-
-		if consecutiveCount >= requiredToWin {
-			return true
-		}
-	}
-	return false
-}
-
-// CheckDraw returns true if the board is completely filled with no empty cells.
-// Note: This should be called after CheckWin to ensure no winner exists.
+// CheckDraw returns true if the board is full (no empty cell remains).
+// Note: a typical game loop should call CheckWin first; this method does not
+// attempt to infer a winner.
 func (b *Board) CheckDraw() bool {
 	for x := range b.Cells {
 		for y := range b.Cells[x] {
@@ -145,8 +137,7 @@ func (b *Board) Clear() {
 // AvailableMoves returns a slice of all empty cell positions on the board.
 // Useful for AI move selection and validation.
 func (b *Board) AvailableMoves() []Move {
-	moves := make([]Move, 0, b.Width*b.Height)
-
+	moves := make([]Move, 0)
 	for x := 0; x < b.Width; x++ {
 		for y := 0; y < b.Height; y++ {
 			if b.Cells[x][y] == nil {
@@ -158,8 +149,9 @@ func (b *Board) AvailableMoves() []Move {
 }
 
 // Clone creates a deep copy of the board.
-// The new board shares Player pointers but has independent cell storage.
-// Useful for AI algorithms that need to simulate moves without affecting the game state.
+//
+// Note: Players are referenced (not cloned), which is intended: players are
+// immutable identity objects, while the board state is what must be copied.
 func (b *Board) Clone() *Board {
 	clone := NewBoard(b.Width, b.Height, b.ToWin)
 
@@ -171,16 +163,23 @@ func (b *Board) Clone() *Board {
 	return clone
 }
 
-// IsFull returns true if no empty cells remain on the board.
-func (b *Board) IsFull() bool {
-	return len(b.AvailableMoves()) == 0
+// inBounds returns true if (x, y) is within the board limits.
+func (b *Board) inBounds(x, y int) bool {
+	return x >= 0 && y >= 0 && x < b.Width && y < b.Height
 }
 
-// CellAt returns the player occupying the cell at (x, y), or nil if empty.
-// Returns nil for out-of-bounds coordinates.
-func (b *Board) CellAt(x, y int) *Player {
-	if !b.isValidPosition(x, y) {
-		return nil
+// effectiveToWin returns a robust, clamped value for ToWin.
+//
+// If ToWin is not usable, it is clamped to min(Width, Height).
+func (b *Board) effectiveToWin() int {
+	target := b.ToWin
+	minDim := b.Width
+	if b.Height < minDim {
+		minDim = b.Height
 	}
-	return b.Cells[x][y]
+
+	if target <= 0 || target > minDim {
+		return minDim
+	}
+	return target
 }
