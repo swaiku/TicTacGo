@@ -1,37 +1,45 @@
 package utils
 
-// SizeMode describes how a widget should resolve its size relative to its parent.
+// SizeMode describes how a widget resolves its dimensions relative to its parent.
 type SizeMode int
 
 const (
-	// SizeFixed uses the widget's own Width/Height values.
+	// SizeFixed uses the widget's explicit Width/Height values.
 	SizeFixed SizeMode = iota
+
 	// SizeFill expands the widget to fill the parent's available space on that axis.
 	SizeFill
 )
 
-// LayoutRect represents a resolved rectangle in absolute coordinates.
+// LayoutRect represents a resolved rectangle in absolute screen coordinates.
+//
+// This is the result of computing a widget's final position and size
+// after applying anchoring, offsets, and size modes.
 type LayoutRect struct {
-	X, Y          float64
-	Width, Height float64
+	X, Y          float64 // Top-left corner position
+	Width, Height float64 // Dimensions
 }
 
-// Insets is a CSS-like padding/margin helper.
+// Insets represents spacing values for all four sides of a rectangle,
+// similar to CSS padding or margin.
 type Insets struct {
-	Top, Right, Bottom, Left float64
+	Top    float64
+	Right  float64
+	Bottom float64
+	Left   float64
 }
 
-// InsetsAll creates uniform insets on all sides.
+// InsetsAll creates uniform insets with the same value on all sides.
 func InsetsAll(v float64) Insets {
 	return Insets{Top: v, Right: v, Bottom: v, Left: v}
 }
 
-// Horizontal returns the combined horizontal space.
+// Horizontal returns the total horizontal space (left + right).
 func (i Insets) Horizontal() float64 {
 	return i.Left + i.Right
 }
 
-// Vertical returns the combined vertical space.
+// Vertical returns the total vertical space (top + bottom).
 func (i Insets) Vertical() float64 {
 	return i.Top + i.Bottom
 }
