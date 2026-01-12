@@ -110,7 +110,7 @@ func NewGameScreen(h ScreenHost, cfg GameConfig) *GameScreen {
 // Update processes input and updates UI components.
 func (gs *GameScreen) Update() error {
 	// Handle AI board interactions
-	if gs.game.State == game.PLAYING {
+	if gs.game.State == game.StatePlaying {
 		current := gs.game.Current
 		if current.IsAI {
 			model := gs.playerAI[current]
@@ -128,7 +128,7 @@ func (gs *GameScreen) Update() error {
 	gs.boardView.Update()
 
 	// Reset the game if it's finished and the user clicks anywhere
-	if gs.game.State == game.GAME_END {
+	if gs.game.State == game.StateGameEnd {
 		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 			gs.game.Reset()
 		}
@@ -153,7 +153,7 @@ func (gs *GameScreen) Draw(screen *ebiten.Image) {
 	gs.scoreView.Draw(screen)
 
 	// Display win/draw message if needed
-	if gs.game.State == game.GAME_END {
+	if gs.game.State == game.StateGameEnd {
 		gs.drawEndMessage(screen)
 	}
 }

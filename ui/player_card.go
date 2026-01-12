@@ -196,9 +196,12 @@ func (c *PlayerCardView) Draw(screen *ebiten.Image) {
 	// Draw the colored accent strip at the top.
 	if c.accentStrip != nil {
 		accent := c.colorOr(color.White)
-		accentRGBA := color.RGBAModel.Convert(accent).(color.RGBA)
-		accentRGBA.A = accentStripAlpha
-
+		accentRGBA, ok := color.RGBAModel.Convert(accent).(color.RGBA)
+		if !ok {
+			accentRGBA = color.RGBA{R: 255, G: 255, B: 255, A: 210}
+		} else {
+			accentRGBA.A = 210
+		}
 		c.accentStrip.Fill(accentRGBA)
 
 		op := &ebiten.DrawImageOptions{}

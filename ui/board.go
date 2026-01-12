@@ -138,8 +138,8 @@ func (v *BoardView) ensureGridImage(width, height float64) {
 	w := int(width)
 	h := int(height)
 
-	if v.Widget.image == nil || v.lastGridW != w || v.lastGridH != h {
-		v.Widget.image = v.createGridImage(w, h)
+	if v.image == nil || v.lastGridW != w || v.lastGridH != h {
+		v.image = v.createGridImage(w, h)
 		v.lastGridW = w
 		v.lastGridH = h
 	}
@@ -187,7 +187,7 @@ func (v *BoardView) Draw(screen *ebiten.Image) {
 		opGrid.GeoM.Scale(rect.Width/srcW, rect.Height/srcH)
 	}
 	opGrid.GeoM.Translate(vx, vy)
-	screen.DrawImage(v.Widget.image, opGrid)
+	screen.DrawImage(v.image, opGrid)
 
 	cellWidth := rect.Width / float64(v.logicBoard.Width)
 	cellHeight := rect.Height / float64(v.logicBoard.Height)

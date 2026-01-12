@@ -5,106 +5,93 @@ import (
 	"image/color"
 )
 
-// GameState represents the current state of a match.
+// GameState represents the current phase of a game.
 type GameState int
 
 const (
-	// PLAYING indicates that a match is currently in progress.
-	PLAYING GameState = iota
-
-	// GAME_END indicates that the match has ended (win or draw).
-	GAME_END
+	// StatePlaying indicates a game is currently in progress.
+	StatePlaying GameState = iota
+	// StateGameEnd indicates the game has finished (either win or draw).
+	StateGameEnd
 )
 
-// Default game configuration for a classic Tic-Tac-Toe match.
+// Default board configuration for a standard 3x3 Tic-Tac-Toe game.
 const (
-	DefaultBoardWidth  = 3
-	DefaultBoardHeight = 3
-	DefaultToWin       = 3
+	DefaultBoardWidth  = 3 // Default number of columns
+	DefaultBoardHeight = 3 // Default number of rows
+	DefaultToWin       = 3 // Default symbols needed to win (3-in-a-row)
 )
 
-// Default player styling (symbols and colors).
-const (
-	defaultColorAlpha = 255
-)
-
-var (
-	defaultPlayer1Color = color.RGBA{R: 255, G: 0, B: 0, A: defaultColorAlpha} // red
-	defaultPlayer2Color = color.RGBA{R: 0, G: 0, B: 255, A: defaultColorAlpha} // blue
-	defaultPlayer1Sym   = assets.CircleSymbol
-	defaultPlayer2Sym   = assets.CrossSymbol
-)
-
-// Game contains all data and logic required to run a match.
-//
-// It orchestrates the board, players, turn order, match state, and scoring.
-// The board size and "toWin" are kept so Reset() can rebuild the board if needed.
+// Game orchestrates the game state, players, and board interactions.
+// It manages turn order, win/draw detection, and score tracking.
 type Game struct {
-	State   GameState // Current game state (playing or ended)
-	Board   *Board    // Game board instance
-	Players []*Player // All players involved in the match
-	Current *Player   // Player whose turn it currently is
-	Winner  *Player   // Winner of the match (nil in case of draw)
+	State   GameState // Current game phase (playing or ended)
+	Board   *Board    // The game board containing cell states
+	Players []*Player // All players participating in the game
+	Current *Player   // The player whose turn it currently is
+	Winner  *Player   // The winner of the current round (nil if draw or ongoing)
 
-	boardWidth  int
-	boardHeight int
-	toWin       int
+	boardWidth  int // Configured board width for resets
+	boardHeight int // Configured board height for resets
+	toWin       int // Configured win condition for resets
 }
 
-// NewGame creates a new Game instance using the default configuration
-// (classic 3x3 Tic-Tac-Toe, 3 aligned symbols to win) with default players.
+// NewGame creates a new Game with default 3x3 configuration and two players.
 func NewGame() *Game {
 	return NewGameWithConfig(DefaultBoardWidth, DefaultBoardHeight, DefaultToWin, nil)
 }
 
-// NewGameWithConfig creates a new Game instance with a custom board configuration.
-//
-// If players is nil or empty, default players are created (2-player game).
+// NewGameWithConfig creates a Game with custom board dimensions and players.
+// If players is nil or empty, default players (Circle and Cross) are created.
 func NewGameWithConfig(boardWidth, boardHeight, toWin int, players []*Player) *Game {
 	g := &Game{}
 	g.ResetHardWithPlayers(boardWidth, boardHeight, toWin, players)
 	return g
 }
 
-// ResetHard fully resets the match (board, players, scores, state) using default configuration.
-// This does NOT preserve any previous scores.
+// ResetHard performs a complete reset with default configuration.
+// This clears all scores and reinitializes with default players.
 func (g *Game) ResetHard() {
 	g.ResetHardWithPlayers(DefaultBoardWidth, DefaultBoardHeight, DefaultToWin, nil)
 }
 
-// ResetHardWithPlayers fully resets the match and applies a new configuration.
-//
-// This creates a new board and replaces the player list.
-// Player scores are reset to zero.
+// ResetHardWithPlayers performs a complete reset with custom configuration.
+// All player scores are reset to zero.
 func (g *Game) ResetHardWithPlayers(boardWidth, boardHeight, toWin int, players []*Player) {
 	g.boardWidth = boardWidth
 	g.boardHeight = boardHeight
 	g.toWin = toWin
 	g.Board = NewBoard(boardWidth, boardHeight, toWin)
 
-	// Fallback to default players if none provided.
 	if len(players) == 0 {
-		players = []*Player{
-			NewPlayer(assets.NewSymbol(defaultPlayer1Sym), defaultPlayer1Color),
-			NewPlayer(assets.NewSymbol(defaultPlayer2Sym), defaultPlayer2Color),
-		}
+		players = g.createDefaultPlayers()
 	}
 
 	g.Players = players
-
-	// Initialize players' scores to zero.
-	for _, p := range g.Players {
-		p.Points = 0
-	}
+	g.resetAllPlayerScores()
 
 	g.Current = g.Players[0]
 	g.Winner = nil
-	g.State = PLAYING
+	g.State = StatePlaying
 }
 
-// Reset clears the board and restarts the match while keeping player scores intact.
-//
-// This is typically used between rounds in the same session.
+// createDefaultPlayers returns the standard two-player setup.
+func (g *Game) createDefaultPlayers() []*Player {
+	return []*Player{
+		NewPlayer(assets.NewSymbol(assets.CircleSymbol), color.RGBA{R: 255, G: 0, B: 0, A: 255}),
+		NewPlayer(assets.NewSymbol(assets.CrossSymbol), color.RGBA{R: 0, G: 0, B: 255, A: 255}),
+	}
+}
+
+// resetAllPlayerScores sets all player scores to zero.
+func (g *Game) resetAllPlayerScores() {
+	for _, player := range g.Players {
+		player.Points = 0
+	}
+}
+
+// Reset clears the board and restarts the game while preserving player scores.
+// Use this between rounds in a multi-round match.
 func (g *Game) Reset() {
 	if g.Board == nil {
 		g.Board = NewBoard(g.boardWidth, g.boardHeight, g.toWin)
@@ -112,91 +99,87 @@ func (g *Game) Reset() {
 		g.Board.Clear()
 	}
 
-	// Reset match state.
 	g.Current = g.Players[0]
 	g.Winner = nil
-	g.State = PLAYING
+	g.State = StatePlaying
 }
 
-// ResetPoints resets every player's score to zero.
+// ResetPoints sets all player scores to zero without affecting the current game state.
 func (g *Game) ResetPoints() {
-	for _, p := range g.Players {
-		p.Points = 0
-	}
+	g.resetAllPlayerScores()
 }
 
-// NextPlayer switches the turn to the next player in the list.
-//
-// If the current player is the last in the list, it wraps around.
-// If Current is not found (unexpected state), it falls back to the first player.
+// NextPlayer advances the turn to the next player in rotation.
+// Players are cycled in the order they appear in the Players slice.
 func (g *Game) NextPlayer() {
 	if len(g.Players) == 0 {
 		return
 	}
 
-	for i, p := range g.Players {
-		if p == g.Current {
+	for i, player := range g.Players {
+		if player == g.Current {
 			g.Current = g.Players[(i+1)%len(g.Players)]
 			return
 		}
 	}
 
-	// Fallback: if current player is not found, reset to first player.
+	// Fallback: current player not found in list, reset to first
 	g.Current = g.Players[0]
 }
 
-// PlayMove attempts to play a move at (x, y), then updates the match state.
-//
-// It handles:
-// - move validation (via Board.Play)
-// - win detection and scoring
-// - draw detection
-// - switching to the next player when the match continues
+// PlayMove attempts to execute a move at coordinates (x, y) for the current player.
+// Returns true if the move was valid and executed successfully.
+// After a valid move, the game checks for win/draw conditions and advances the turn.
 func (g *Game) PlayMove(x, y int) bool {
-	ok := g.Board.Play(g.Current, x, y)
-	if !ok {
+	if !g.Board.Play(g.Current, x, y) {
 		return false
 	}
 
-	// Check for victory.
 	if g.CheckWin() {
 		return true
 	}
 
-	// Check for draw (board full, no winner).
 	if g.CheckDraw() {
 		return true
 	}
 
-	// Continue the game: switch to next player.
 	g.NextPlayer()
 	return true
 }
 
-// CheckWin checks whether a player won the match.
-//
-// If a winner is found, it updates Winner, increments the winner's score,
-// and ends the match (State = GAME_END).
+// CheckWin checks if the current board state contains a winning alignment.
+// If a winner is found, updates the game state, increments their score,
+// and sets the State to StateGameEnd.
 func (g *Game) CheckWin() bool {
-	p := g.Board.CheckWin()
-	if p != nil {
-		g.Winner = p
-		g.Winner.Points++
-		g.State = GAME_END
-		return true
+	winner := g.Board.CheckWin()
+	if winner == nil {
+		return false
 	}
-	return false
+
+	g.Winner = winner
+	g.Winner.Points++
+	g.State = StateGameEnd
+	return true
 }
 
-// CheckDraw checks whether the match is a draw (board full, no winner).
-//
-// If the match is a draw, Winner is set to nil and the match ends
-// (State = GAME_END).
+// CheckDraw checks if the game is a draw (board full with no winner).
+// If a draw is detected, sets the State to StateGameEnd with no winner.
 func (g *Game) CheckDraw() bool {
-	if g.Board.CheckDraw() {
-		g.Winner = nil
-		g.State = GAME_END
-		return true
+	if !g.Board.CheckDraw() {
+		return false
 	}
-	return false
+
+	g.Winner = nil
+	g.State = StateGameEnd
+	return true
+}
+
+// IsPlaying returns true if the game is currently in progress.
+func (g *Game) IsPlaying() bool {
+	return g.State == StatePlaying
+}
+
+// IsGameEnd returns true if the game has finished.
+func (g *Game) IsGameEnd() bool {
+	return g.State == StateGameEnd
 }

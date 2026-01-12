@@ -153,8 +153,8 @@ func (sv *ScoreView) drawPlayerZone(
 		// Apply player color tint.
 		op.ColorScale.ScaleWithColor(p.Color)
 
-		// Dim non-active players.
-		if sv.gameRef.Current != p && sv.gameRef.State == game.PLAYING {
+		// Dim non-active players
+		if sv.gameRef.Current != p && sv.gameRef.State == game.StatePlaying {
 			op.ColorScale.ScaleAlpha(nonActiveAlphaScale)
 		}
 
