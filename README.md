@@ -15,7 +15,7 @@
     <a href="https://github.com/swaiku/TicTacGo"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/swaiku/TicTacGo">View Demo</a>
+    <a href="https://swaiku.github.io/TicTacGo">View Demo</a>
     ·
     <a href="https://github.com/swaiku/TicTacGo/issues">Report Bug</a>
     ·
@@ -56,7 +56,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-TicTacGo is a robust implementation of the classic Tic-Tac-Toe game, engineered with Go and the Ebitengine 2D game library. It showcases how to build a scalable, cross-platform game with a responsive UI, AI opponents, and WebAssembly support for browser-based play.
+Gonnect Max is a robust implementation of the classic Tic-Tac-Toe game, engineered with Go and the Ebitengine 2D game library. It showcases how to build a scalable, cross-platform game with a responsive UI, AI opponents, and WebAssembly support for browser-based play.
 
 Key features:
 *   **Cross-Platform:** Runs natively on desktop (Linux, Windows, macOS) and in the browser via WebAssembly.
