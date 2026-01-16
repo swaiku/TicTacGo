@@ -7,7 +7,7 @@
     <img src="assets/static/gonnectmax_logo.png" alt="Logo" width="600" height="450">
   </a>
 
-  <h3 align="center">TicTacGo</h3>
+  <h3 align="center">Gonnect Max</h3>
 
   <p align="center">
     A modern, cross-platform Tic-Tac-Toe game written in Go using Ebitengine.
